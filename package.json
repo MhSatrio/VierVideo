@@ -1,0 +1,98 @@
+{
+  "name": "vier-video",
+  "productName": "VierVideo",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "VierVideo: local HTML-to-video editor and narration studio. Developed by VierApparatus.",
+  "main": "electron/main.mjs",
+  "author": {
+    "name": "VierApparatus"
+  },
+  "scripts": {
+    "dev": "vite",
+    "typecheck": "tsc --noEmit",
+    "build": "tsc --noEmit && vite build",
+    "test": "vitest run",
+    "start": "npm run build && electron .",
+    "e2e:stage1": "node tests/e2e/stage1.mjs",
+    "e2e:stage2": "node tests/e2e/stage2.mjs",
+    "e2e:stage3": "node tests/e2e/stage3.mjs",
+    "e2e:stage4": "node tests/e2e/stage4.mjs",
+    "e2e:stage5": "node tests/e2e/stage5.mjs",
+    "dist:win": "node scripts/dist-win.mjs",
+    "e2e:installed": "node tests/e2e/installed.mjs",
+    "e2e:usability": "node tests/e2e/usability.mjs"
+  },
+  "dependencies": {
+    "@fontsource-variable/jost": "^5.2.0",
+    "lucide-react": "^0.468.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^5.0.0",
+    "electron": "^45.2.3",
+    "electron-builder": "^26.18.0",
+    "playwright-core": "^1.50.0",
+    "typescript": "^5.7.0",
+    "vite": "^7.0.0",
+    "vitest": "^3.0.0"
+  },
+  "build": {
+    "appId": "com.vierapparatus.viervideo",
+    "productName": "VierVideo",
+    "copyright": "Developed by VierApparatus",
+    "directories": {
+      "output": "release",
+      "buildResources": "build"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "shared/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "tools/tts",
+        "to": "tts",
+        "filter": [
+          "*.py",
+          "*.json",
+          "*.txt",
+          "*.ps1"
+        ]
+      }
+    ],
+    "asar": true,
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "VierVideo",
+      "uninstallDisplayName": "VierVideo",
+      "installerIcon": "build/icon.ico",
+      "uninstallerIcon": "build/icon.ico",
+      "installerHeaderIcon": "build/icon.ico",
+      "runAfterFinish": true,
+      "deleteAppDataOnUninstall": false,
+      "artifactName": "${productName}-Setup-${version}.exe"
+    }
+  }
+}

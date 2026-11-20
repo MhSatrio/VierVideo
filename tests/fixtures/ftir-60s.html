@@ -1,0 +1,401 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>FTIR Spectroscopy in 60 Seconds | Vier Apparatus</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Jost:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root { --blue:#4570B6; --ice:#CAEBFB; --ink:#231F20; }
+  html,body { margin:0; height:100%; background:#eef1f5; font-family:Jost,system-ui,sans-serif; }
+  body { display:flex; align-items:center; justify-content:center; }
+  #wrap { position:relative; height:100vh; aspect-ratio:9/16; background:#fff; overflow:hidden; }
+  canvas { width:100%; height:100%; display:block; }
+  #bar { position:absolute; left:0; bottom:0; height:5px; width:0; background:var(--blue); }
+  #controls { position:absolute; left:0; right:0; top:14px; display:flex; justify-content:center; gap:8px; }
+  button { font-family:Jost,system-ui,sans-serif; font-size:14px; font-weight:500; color:var(--ink);
+           background:#fff; border:1px solid var(--blue); border-radius:999px; padding:6px 14px; cursor:pointer; }
+  button:hover { background:var(--ice); }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <canvas id="c" width="1080" height="1920" aria-label="Animated vertical explainer on FTIR spectroscopy"></canvas>
+  <div id="controls">
+    <button id="voice" type="button">Narration: off</button>
+    <button id="replay" type="button">Replay</button>
+  </div>
+  <div id="bar"></div>
+</div>
+
+<script>
+(() => {
+  const W = 1080, H = 1920, DUR = 60000;
+  const BLUE = '#4570B6', ICE = '#CAEBFB', INK = '#231F20', WHITE = '#FFFFFF';
+  const cv = document.getElementById('c'), ctx = cv.getContext('2d');
+  const bar = document.getElementById('bar');
+  const LOGO_SRC = 'data:image/png;base64,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4UJ2NBke/qgdB52l1g4ACVfTDpT8xgJrQ8QlzBe8cc6NtYNgInggeSea0zyjCVvGUFfhC4ceUE6lwZqnBKqBQP6JYK0dwCHk79QYZSSDlXYATASPU2sHcIRaOwCilMgbo1uUcXGx5AUJXCyBr+dQrnPYnhNJpg8iyWAF+6/XsXYATASPIC+iHE7KZ7ZYoB1yXgV/FnldjMHKYNehuiEAAA0WSURBVC5eAIwTG92otQM4wQvaN0FZkWHsMfIajcsOE8Hj1doB7LEAkFznckpKfeT3p3QRPtvasNMn5VBot4/e++vEksDV+fMOeRQFgPY8Ty2ZPpg83tdo5/jm8pgfo9EOwHnvtWPIjnOuQnsxvdSN5BsLtCfUQ64veBqOTFBusP8cXgK4lZXz5sjjUAG4042ExBJti5g69VEN59wI7ZvuW6R1LQDa68EE7fVgrhxLMM65N2hfr7cAbnSjOdsS7fNTawfCRPAM0gNoDOAN2ncsbwYOYY528vK08EUAdCLn3C3ac3ckH0BbAZzJvxNLF5Jt5AIzxuZjQfGtzrVprm84JCkcoz1v1q8F12h3ktjl0KkaI7QJ5wKbu+WsXrNzALNSrgdyDR6hfZyB81675yaWL+gfPZmt3f71b2tKzxETQSIiIqJCcY4gERERUaGYCBIREREViokgERERUaGYCBIREREViokgERERUaGYCBIREREViokgERERUaGYCBIREREViokgERERUaGYCBIREREViokgERERUaGYCBIREREViokgERERUaGYCBIREREViokgERERUaGYCBIREREViokgERERUaGYCBIREREViokgERERUaGYCBIREREViokgERERUaGYCBIREREViokgERERUaGYCBIREREViokgERERUaG+1w6A6FzOuVvv/UQ7DgKcc2MAc+/9XDmU5PA8TZect9cA3shNU/A8pkI47712DEQnc85VAD4D+Ml7Px3omA2A0Z5v+wJgBmAW+uLvnLsHcHvAt04lhqn3/kvIGLZxzs3RXkDHAx3vGkCN1wt4nxmAOdrnYho/qk2SaPwG4OcYyaC8DqoAdzUHcH/q+eKcewOgQft8NN775tRA5DGrz41px/2P5P7vdnzbM878PYhSx0SQsiaJxyWAhfd+NNAxj33RLAE8eO/rQMefo/2dj/EJQB0zIVxLdgDg3RAXzxMeiwXa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';
+
+  // ---------- helpers ----------
+  const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
+  const seg = (s, a, b) => clamp((s - a) / (b - a));
+  const ease = p => p < .5 ? 4*p*p*p : 1 - Math.pow(-2*p + 2, 3) / 2;
+  const fadeW = (s, a, b) => Math.min(seg(s, a, a + .5), 1 - seg(s, b - .4, b));
+
+  const logo = new Image();
+  logo.src = LOGO_SRC;
+
+  function line(x1, y1, x2, y2, c, w = 3, al = 1) {
+    ctx.save(); ctx.globalAlpha = al; ctx.strokeStyle = c; ctx.lineWidth = w; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke(); ctx.restore();
+  }
+  function arrow(x1, y1, x2, y2, c, w = 8, al = 1) {
+    line(x1, y1, x2, y2, c, w, al);
+    const a = Math.atan2(y2 - y1, x2 - x1), L = 26;
+    ctx.save(); ctx.globalAlpha = al; ctx.fillStyle = c; ctx.beginPath();
+    ctx.moveTo(x2, y2);
+    ctx.lineTo(x2 - L*Math.cos(a - .45), y2 - L*Math.sin(a - .45));
+    ctx.lineTo(x2 - L*Math.cos(a + .45), y2 - L*Math.sin(a + .45));
+    ctx.closePath(); ctx.fill(); ctx.restore();
+  }
+  function txt(str, x, y, size, c, wt = 500, align = 'center', al = 1) {
+    if (al <= 0) return;
+    ctx.save(); ctx.globalAlpha = al; ctx.fillStyle = c;
+    ctx.font = `${wt} ${size}px Jost, system-ui, sans-serif`;
+    ctx.textAlign = align; ctx.textBaseline = 'middle';
+    ctx.fillText(str, x, y); ctx.restore();
+  }
+  function atom(x, y, r, fill, label, tc) {
+    ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fillStyle = fill; ctx.fill();
+    txt(label, x, y + 2, r * .9, tc, 600);
+  }
+  function spring(x1, y1, x2, y2, c, coils = 8, amp = 24) {
+    const dx = x2 - x1, dy = y2 - y1, L = Math.hypot(dx, dy);
+    const ux = dx / L, uy = dy / L, nx = -uy, ny = ux, lead = L * .12, n = coils * 2;
+    ctx.save(); ctx.strokeStyle = c; ctx.lineWidth = 8; ctx.lineJoin = 'round';
+    ctx.beginPath(); ctx.moveTo(x1, y1);
+    ctx.lineTo(x1 + ux*lead, y1 + uy*lead);
+    for (let i = 1; i < n; i++) {
+      const f = lead + (L - 2*lead) * i / n, sg = (i % 2 ? 1 : -1) * amp;
+      ctx.lineTo(x1 + ux*f + nx*sg, y1 + uy*f + ny*sg);
+    }
+    ctx.lineTo(x2 - ux*lead, y2 - uy*lead); ctx.lineTo(x2, y2);
+    ctx.stroke(); ctx.restore();
+  }
+  function drawLogo(cx, cy, w, al) {
+    if (!logo.complete || !logo.naturalWidth || al <= 0) return;
+    const h = w * logo.naturalHeight / logo.naturalWidth;
+    ctx.save(); ctx.globalAlpha = al;
+    ctx.drawImage(logo, cx - w/2, cy - h/2, w, h); ctx.restore();
+  }
+  // Transmittance model (1 = no absorption). Representative peaks for an organic sample.
+  const PEAKS = [[3350,.55,90],[2960,.22,22],[2925,.35,24],[2855,.20,20],
+                 [1715,.72,22],[1460,.18,18],[1240,.30,30],[1050,.45,35]];
+  function T(n) {
+    let a = 0;
+    for (const [c, d, w] of PEAKS) a += d * Math.exp(-(((n - c) / w) ** 2));
+    return 1 - Math.min(a, .95);
+  }
+  // Interferogram: centre burst at zero path difference, decaying fringes.
+  function ifg(x0, x1, yc, amp, u, c, w) {
+    ctx.save(); ctx.strokeStyle = c; ctx.lineWidth = w; ctx.lineJoin = 'round';
+    ctx.beginPath(); const N = 400;
+    for (let i = 0; i <= N * u; i++) {
+      const d = -1 + 2 * i / N;
+      const y = yc - amp * Math.exp(-((d / .3) ** 2)) * Math.cos(2 * Math.PI * 7 * d);
+      const x = x0 + (d + 1) / 2 * (x1 - x0);
+      i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+    }
+    ctx.stroke(); ctx.restore();
+  }
+  // Spectrum trace, wavenumber axis reversed (4000 left -> 400 right).
+  function spec(x0, x1, yTop, hgt, nmax, c, w) {
+    ctx.save(); ctx.strokeStyle = c; ctx.lineWidth = w; ctx.lineJoin = 'round';
+    ctx.beginPath(); let first = true;
+    for (let n = 4000; n >= nmax; n -= 4) {
+      const x = x0 + (4000 - n) / 3600 * (x1 - x0);
+      const y = yTop + (1 - T(n)) * hgt;
+      first ? ctx.moveTo(x, y) : ctx.lineTo(x, y); first = false;
+    }
+    ctx.stroke(); ctx.restore();
+  }
+  const sx = (n, x0, x1) => x0 + (4000 - n) / 3600 * (x1 - x0);
+
+  // ---------- scenes (layout in 1080 x 1920 reel space) ----------
+
+  // 0-6 s: hook
+  function scene1(s) {
+    const amp = 40 + 40 * seg(s, 0, 1.5);
+    const reveal = W * seg(s, 0, 1.2);
+    ctx.save(); ctx.strokeStyle = BLUE; ctx.lineWidth = 6; ctx.lineJoin = 'round';
+    ctx.beginPath();
+    for (let x = 0; x <= reveal; x += 4) {
+      const u = x / W * 4 * Math.PI;
+      const y = 1480 + amp * Math.sin(u * 2 - s * 5) * (.6 + .4 * Math.sin(u * .5 + s));
+      x ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+    }
+    ctx.stroke(); ctx.restore();
+    txt('Every molecule is', W/2, 700, 84, INK, 600, 'center', fadeW(s, .4, 3.4));
+    txt('constantly vibrating.', W/2, 800, 84, INK, 600, 'center', fadeW(s, .4, 3.4));
+    txt('FTIR', W/2, 980, 260, BLUE, 700, 'center', fadeW(s, 3.6, 6));
+    txt('Fourier Transform', W/2, 1110, 60, INK, 500, 'center', fadeW(s, 3.6, 6));
+    txt('Infrared Spectroscopy', W/2, 1180, 60, INK, 500, 'center', fadeW(s, 3.6, 6));
+  }
+
+  // 6-14 s: bonds stretch, then bend (scene-local s: 0-8)
+  function scene2(s) {
+    const cx = W/2;
+    if (s < 4) {
+      const L = 360 + 56 * Math.sin(2 * Math.PI * 1.2 * s);
+      const y = 1040, x1 = cx - L/2, x2 = cx + L/2;
+      spring(x1, y, x2, y, INK, 8, 36);
+      atom(x1, y, 100, BLUE, 'C', ICE);
+      atom(x2, y, 84, INK, 'O', ICE);
+      txt('Stretching', cx, 640, 110, INK, 600, 'center', fadeW(s, 0, 4));
+      txt('Two atoms, one bond,', cx, 790, 48, INK, 500, 'center', fadeW(s, .3, 3.8));
+      txt('moving like a spring', cx, 850, 48, INK, 500, 'center', fadeW(s, .3, 3.8));
+    } else {
+      const b = 14 * Math.sin(2 * Math.PI * 1.2 * (s - 4));
+      const ox = cx, oy = 1060, R = 300;
+      const a1 = (-90 - 52 - b) * Math.PI / 180, a2 = (-90 + 52 + b) * Math.PI / 180;
+      const h1 = [ox + R*Math.cos(a1), oy + R*Math.sin(a1)];
+      const h2 = [ox + R*Math.cos(a2), oy + R*Math.sin(a2)];
+      spring(ox, oy, h1[0], h1[1], INK, 6, 28);
+      spring(ox, oy, h2[0], h2[1], INK, 6, 28);
+      atom(ox, oy, 96, INK, 'O', ICE);
+      atom(h1[0], h1[1], 56, BLUE, 'H', ICE);
+      atom(h2[0], h2[1], 56, BLUE, 'H', ICE);
+      txt('Bending', cx, 640, 110, INK, 600, 'center', fadeW(s, 4, 8));
+      txt('The bond angle opens', cx, 790, 48, INK, 500, 'center', fadeW(s, 4.3, 7.8));
+      txt('and closes', cx, 850, 48, INK, 500, 'center', fadeW(s, 4.3, 7.8));
+    }
+  }
+
+  // 14-26 s: interferometer and interferogram
+  function scene3(s) {
+    const mx = 840 + 40 * Math.sin(2 * Math.PI * .35 * s);
+    line(120, 760, 500, 760, BLUE, 8, .9);          // source beam
+    line(540, 760, 540, 575, BLUE, 5, .55);          // to fixed mirror
+    line(540, 760, mx, 760, BLUE, 5, .55);           // to moving mirror
+    line(540, 760, 540, 930, BLUE, 5, .55);          // to detector
+    line(480, 700, 600, 820, BLUE, 16, 1);           // beam splitter
+    line(500, 560, 580, 560, INK, 14, 1);            // fixed mirror
+    line(mx, 680, mx, 840, INK, 14, 1);              // moving mirror
+    ctx.save(); ctx.strokeStyle = INK; ctx.lineWidth = 5; ctx.strokeRect(510, 930, 60, 44); ctx.restore();
+    const ph = (s * .6) % 1;
+    ctx.save(); ctx.fillStyle = BLUE; ctx.beginPath();
+    ctx.arc(120 + (mx - 120) * ph, 760, 9, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+    txt('IR source', 120, 700, 38, INK, 500, 'left');
+    txt('Beam splitter', 640, 880, 38, INK, 500, 'left');
+    txt('Fixed mirror', 620, 540, 38, INK, 500, 'left');
+    txt('Moving mirror', mx, 630, 38, INK, 500, 'center');
+    txt('Detector', 540, 1010, 38, INK, 500, 'center');
+    // interferogram
+    const u = ease(seg(s, 1.5, 10));
+    line(90, 1420, 990, 1420, BLUE, 3);
+    ifg(90, 990, 1420, 120, u, INK, 5);
+    txt('Interferogram', 90, 1300, 50, INK, 600, 'left', fadeW(s, 1, 12));
+    txt('Mirror displacement →', 990, 1300, 36, BLUE, 500, 'right', fadeW(s, 1, 12));
+  }
+
+  // 26-36 s: Fourier transform, interferogram to spectrum
+  function scene4(s) {
+    txt('Interferogram', W/2, 560, 60, INK, 600, 'center', fadeW(s, 0, 10));
+    line(90, 800, 990, 800, BLUE, 3, .8);
+    ifg(90, 990, 800, 130, 1, INK, 5);
+    arrow(W/2, 900, W/2, 985, BLUE, 10);
+    txt('Fourier transform', W/2, 1040, 40, BLUE, 600, 'center', fadeW(s, .5, 10));
+    txt('Spectrum', W/2, 1100, 60, INK, 600, 'center', fadeW(s, 1, 10));
+    const nmax = 4000 - 3600 * ease(seg(s, 1.2, 7));
+    line(90, 1160, 990, 1160, BLUE, 2, .5);
+    line(90, 1440, 990, 1440, BLUE, 3, fadeW(s, 1, 10));
+    [[4000,'4000'],[3000,'3000'],[2000,'2000'],[1000,'1000'],[400,'400']].forEach(([n, l]) => {
+      const x = sx(n, 90, 990);
+      line(x, 1440, x, 1452, BLUE, 3, fadeW(s, 1, 10));
+      txt(l, x, 1490, 34, INK, 500, 'center', fadeW(s, 1, 10));
+    });
+    spec(90, 990, 1160, 260, nmax, INK, 5);
+    txt('Wavenumber (cm−1)', W/2, 1550, 36, BLUE, 500, 'center', fadeW(s, 1, 10));
+  }
+
+  // 36-48 s: annotated spectrum
+  function scene5(s) {
+    const x0 = 90, x1 = 990, yTop = 800, hgt = 520, yAx = 1340;
+    const prog = ease(seg(s, 0, 1.2));
+    const fpA = seg(s, 5.5, 6.5) * .25;
+    ctx.save(); ctx.fillStyle = ICE; ctx.globalAlpha = fpA;
+    ctx.fillRect(sx(1500, x0, x1), yTop - 10, sx(400, x0, x1) - sx(1500, x0, x1), yAx - yTop + 10);
+    ctx.restore();
+    line(x0, yTop, x1, yTop, BLUE, 2, .5);
+    line(x0, yAx, x1, yAx, BLUE, 3);
+    [[4000,'4000'],[3000,'3000'],[2000,'2000'],[1000,'1000']].forEach(([n, l]) => {
+      const x = sx(n, x0, x1);
+      line(x, yAx, x, yAx + 12, BLUE, 3);
+      txt(l, x, yAx + 36, 34, INK, 500, 'center', .9);
+    });
+    txt('Wavenumber (cm−1)', W/2, yAx + 90, 36, BLUE, 500, 'center', .9);
+    spec(x0, x1, yTop, hgt, 4000 - 3600 * prog, BLUE, 6);
+    const labels = [
+      [3350, 'O–H stretch', '~3300 cm−1, broad', 250, 560, 37.0],
+      [2930, 'C–H stretch', '2850–2960 cm−1',   430, 680, 38.5],
+      [1715, 'C=O stretch', '~1715 cm−1, strong', 690, 560, 40.0],
+      [1050, 'Fingerprint',  'below 1500 cm−1',   860, 680, 42.0],
+    ];
+    labels.forEach(([n, name, sub, lx, ly, ap]) => {
+      const al = seg(s, ap, ap + .6) * (1 - seg(s, 46.6, 47.4));
+      const px = sx(n, x0, x1), py = yTop + (1 - T(n)) * hgt;
+      line(lx, ly + 60, px, py - 14, INK, 2.5, .7 * al);
+      txt(name, lx, ly, 42, INK, 600, 'center', al);
+      txt(sub, lx, ly + 44, 30, INK, 500, 'center', .8 * al);
+    });
+  }
+
+  // 48-60 s: recap, then closing card (logo in pill, screenshot layout)
+  function scene6(s) {
+    const steps = ['Vibrations', 'Interferogram', 'Spectrum', 'Molecular identity'];
+    const fadeOut = 1 - seg(s, 4.4, 5.0);
+    steps.forEach((t, i) => {
+      const y = 740 + i * 150;
+      const al = seg(s, .5 + i * 1.1, .5 + i * 1.1 + .6) * fadeOut;
+      txt(t, W/2, y, 64, INK, 600, 'center', al);
+      if (i < steps.length - 1) arrow(W/2, y + 40, W/2, y + 110, BLUE, 6, al);
+    });
+    // closing card: layout taken from closing_template.html (1080x1920)
+    const a1 = seg(s, 5.0, 5.8);
+    if (logo.complete && logo.naturalWidth && a1 > 0) {
+      ctx.save(); ctx.globalAlpha = a1;
+      ctx.drawImage(logo, 60, 390, 520, 520 * logo.naturalHeight / logo.naturalWidth);
+      ctx.restore();
+    }
+    txt('Keep Exploring Science', 60, 800, 66, INK, 700, 'left', a1);
+    txt('With VierApparatus', 60, 879, 66, INK, 700, 'left', a1);
+    ctx.save(); ctx.globalAlpha = a1; ctx.fillStyle = BLUE;
+    ctx.beginPath(); ctx.arc(683, 890, 5, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+    const a2 = seg(s, 5.8, 6.6);
+    ctx.save(); ctx.globalAlpha = a2; ctx.fillStyle = ICE;
+    ctx.beginPath(); ctx.roundRect(60, 1030, 670, 140, 70); ctx.fill(); ctx.restore();
+    txt('vierapparatus.com', 130, 1095, 59, BLUE, 700, 'left', a2);
+  }
+
+  // ---------- transitions: blue wipes ----------
+  function wipes(s) {
+    for (const B of [6, 14, 26, 36, 48]) {
+      const d = s - B;
+      ctx.save(); ctx.fillStyle = BLUE;
+      if (d > -.4 && d < 0) ctx.fillRect(0, 0, W * (d + .4) / .4, H);
+      else if (d >= 0 && d < .4) { const x = W * d / .4; ctx.fillRect(x, 0, W - x, H); }
+      ctx.restore();
+    }
+  }
+
+  // ---------- subtitles (narration text), wrapped, reels-safe ----------
+  const SUBS = [
+    [0, 5.5, 'Every molecule is constantly vibrating.'],
+    [6, 10, 'Bonds stretch and bend like tiny springs.'],
+    [10, 14, 'Each vibration has a characteristic frequency.'],
+    [14.5, 20.5, 'FTIR passes infrared light through an interferometer, where one mirror moves.'],
+    [20.5, 26, 'The detector records an interferogram: a pattern of light and dark fringes.'],
+    [26, 31.5, 'A Fourier transform converts that pattern into a spectrum.'],
+    [31.5, 36, 'Each frequency the sample absorbs appears as a dip.'],
+    [36.5, 42.5, 'An O–H stretch near 3300 wavenumbers points to O–H groups, such as in alcohols or water.'],
+    [42.5, 48, 'A carbonyl peak near 1715 flags C=O groups.'],
+    [48.5, 54, 'The fingerprint region below 1500 helps identify the exact molecule.'],
+    [54, 60, 'FTIR: a molecular fingerprint in seconds.'],
+  ];
+  function wrap(str, maxW, size, wt) {
+    ctx.font = `${wt} ${size}px Jost, system-ui, sans-serif`;
+    const words = str.split(' '), out = []; let cur = '';
+    for (const w of words) {
+      const t = cur ? cur + ' ' + w : w;
+      if (ctx.measureText(t).width > maxW && cur) { out.push(cur); cur = w; }
+      else cur = t;
+    }
+    if (cur) out.push(cur);
+    return out;
+  }
+  function subtitle(s) {
+    const cur = SUBS.find(([a, b]) => s >= a && s < b);
+    if (!cur) return;
+    const [a, b, text] = cur;
+    const al = Math.min(seg(s, a, a + .3), 1 - seg(s, b - .3, b));
+    if (al <= 0) return;
+    const size = 40, lh = 56;
+    const lines = wrap(text, 860, size, 500);
+    ctx.font = `500 ${size}px Jost, system-ui, sans-serif`;
+    const bw = Math.max(...lines.map(l => ctx.measureText(l).width)) + 56;
+    const bh = lines.length * lh + 28;
+    const cy = 1640 - bh / 2 + lh / 2;
+    ctx.save(); ctx.globalAlpha = al; ctx.fillStyle = BLUE;
+    ctx.beginPath(); ctx.roundRect(W/2 - bw/2, 1640 - bh/2, bw, bh, 22); ctx.fill(); ctx.restore();
+    lines.forEach((l, i) => txt(l, W/2, cy + i * lh, size, WHITE, 500, 'center', al));
+  }
+
+  // ---------- main draw ----------
+  function draw(t) {
+    const s = t / 1000;
+    ctx.fillStyle = WHITE; ctx.fillRect(0, 0, W, H);
+    if (s < 6) scene1(s);
+    else if (s < 14) scene2(s - 6);
+    else if (s < 26) scene3(s - 14);
+    else if (s < 36) scene4(s - 26);
+    else if (s < 48) scene5(s - 36);
+    else scene6(Math.min(s - 48, 12));
+    wipes(s);
+    if (s < 60) subtitle(s);
+  }
+
+  // ---------- playback, narration, controls ----------
+  let start = null, running = false, voiceOn = false, timers = [];
+  const voiceBtn = document.getElementById('voice');
+  const replayBtn = document.getElementById('replay');
+
+  function clearSpeech() {
+    timers.forEach(clearTimeout); timers = [];
+    if ('speechSynthesis' in window) speechSynthesis.cancel();
+  }
+  function scheduleSpeech() {
+    if (!voiceOn || !('speechSynthesis' in window)) return;
+    SUBS.forEach(([a, , text]) => {
+      timers.push(setTimeout(() => {
+        const u = new SpeechSynthesisUtterance(text);
+        u.lang = 'en-US'; u.rate = .95;
+        speechSynthesis.speak(u);
+      }, a * 1000));
+    });
+  }
+  function frame(now) {
+    let t = now - start;
+    if (t >= DUR) { t = DUR; running = false; }
+    draw(t);
+    bar.style.width = (t / DUR * 100) + '%';
+    if (running) requestAnimationFrame(frame);
+  }
+  function play() {
+    clearSpeech();
+    start = performance.now(); running = true;
+    scheduleSpeech();
+    requestAnimationFrame(frame);
+  }
+
+  voiceBtn.addEventListener('click', () => {
+    if (!('speechSynthesis' in window)) { voiceBtn.textContent = 'Narration unavailable'; return; }
+    voiceOn = !voiceOn;
+    voiceBtn.textContent = 'Narration: ' + (voiceOn ? 'on' : 'off');
+    if (!voiceOn) clearSpeech();
+  });
+  replayBtn.addEventListener('click', play);
+
+  // Wait for the Jost font and the logo image, then start.
+  const fontReady = document.fonts && document.fonts.load
+    ? document.fonts.load('600 40px Jost').catch(() => {})
+    : Promise.resolve();
+  const logoReady = new Promise(res => {
+    if (logo.complete && logo.naturalWidth) res();
+    else { logo.onload = res; logo.onerror = res; }
+  });
+  Promise.all([fontReady, logoReady]).then(() => { draw(0); play(); });
+})();
+</script>
+</body>
+</html>

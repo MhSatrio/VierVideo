@@ -1,0 +1,7 @@
+# Narration engine for VierVideo (installed by setup-narration.ps1). These are the versions the app was tested with.
+# Kokoro-82M is the model; the other packages are what it needs to run on the CPU.
+kokoro==0.9.4
+numpy==2.5.4
+soundfile==0.14.0
+torch==2.15.0
+huggingface_hub==2.3.0
